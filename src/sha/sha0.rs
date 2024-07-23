@@ -56,7 +56,7 @@ where
 
         let zeros = n - (bits_len + 65) % n;
         data.extend(vec![0; zeros / 8]);
-        
+
         data.extend(bits_len.to_be_bytes());
         data
     }
