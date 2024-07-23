@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "HashAlgorithms"
+name = "hash_algorithms"
 version = "0.1.0"
