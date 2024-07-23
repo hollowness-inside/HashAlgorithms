@@ -6,68 +6,86 @@ use super::sha::Sha;
 
 type Func = Common<u64>;
 
-pub type Sha512 = Sha<u64>;
+pub type Sha512 = Sha<u64, 8, 16>;
+
+impl Default for Sha512 {
+    fn default() -> Self {
+        Self {
+            digest: INIT_512,
+            block: [0; 16],
+        }
+    }
+}
 
 impl HashBytes for Sha512 {
-    fn hash_bytes(messsage: &[u8]) -> Vec<u8> {
-        let mut hash_values = INIT_512;
-        let blocks = preprocess_512(messsage);
+    fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
+        let mut hash = Sha512::default();
+        hash.update(bytes)
+    }
+}
 
-        for block in blocks.iter() {
-            let mut schedule: Vec<u64> = vec![0; 80];
-            schedule[..16].copy_from_slice(&block[..16]);
-
-            for t in 16..80 {
-                let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
-                    .wrapping_add(schedule[t - 7])
-                    .wrapping_add(Func::lowercase_sigma::<1, 8, 7>(schedule[t - 15]))
-                    .wrapping_add(schedule[t - 16]);
-
-                schedule[t] = x;
-            }
-
-            let mut a = hash_values[0];
-            let mut b = hash_values[1];
-            let mut c = hash_values[2];
-            let mut d = hash_values[3];
-            let mut e = hash_values[4];
-            let mut f = hash_values[5];
-            let mut g = hash_values[6];
-            let mut h = hash_values[7];
-
-            for t in 0..80 {
-                let t1 = h
-                    .wrapping_add(Func::uppercase_sigma::<14, 18, 41>(e))
-                    .wrapping_add(Func::ch(e, f, g))
-                    .wrapping_add(K_512[t])
-                    .wrapping_add(schedule[t]);
-
-                let t2 = Func::uppercase_sigma::<28, 34, 39>(a).wrapping_add(Func::maj(a, b, c));
-
-                h = g;
-                g = f;
-                f = e;
-                e = d.wrapping_add(t1);
-                d = c;
-                c = b;
-                b = a;
-                a = t1.wrapping_add(t2);
-            }
-
-            hash_values[0] = a.wrapping_add(hash_values[0]);
-            hash_values[1] = b.wrapping_add(hash_values[1]);
-            hash_values[2] = c.wrapping_add(hash_values[2]);
-            hash_values[3] = d.wrapping_add(hash_values[3]);
-            hash_values[4] = e.wrapping_add(hash_values[4]);
-            hash_values[5] = f.wrapping_add(hash_values[5]);
-            hash_values[6] = g.wrapping_add(hash_values[6]);
-            hash_values[7] = h.wrapping_add(hash_values[7]);
+impl Sha512 {
+    fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
+        for block in preprocess_512(bytes).iter() {
+            self.block.copy_from_slice(&block);
+            self.calculate_block();
         }
 
-        hash_values
+        self.digest
             .into_iter()
             .flat_map(|value| value.to_be_bytes())
             .collect()
+    }
+
+    fn calculate_block(&mut self) {
+        let mut schedule = vec![0; 80];
+        schedule[..16].copy_from_slice(&self.block[..16]);
+
+        for t in 16..80 {
+            let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
+                .wrapping_add(schedule[t - 7])
+                .wrapping_add(Func::lowercase_sigma::<1, 8, 7>(schedule[t - 15]))
+                .wrapping_add(schedule[t - 16]);
+
+            schedule[t] = x;
+        }
+
+        let mut a = self.digest[0];
+        let mut b = self.digest[1];
+        let mut c = self.digest[2];
+        let mut d = self.digest[3];
+        let mut e = self.digest[4];
+        let mut f = self.digest[5];
+        let mut g = self.digest[6];
+        let mut h = self.digest[7];
+
+        for t in 0..80 {
+            let t1 = h
+                .wrapping_add(Func::uppercase_sigma::<14, 18, 41>(e))
+                .wrapping_add(Func::ch(e, f, g))
+                .wrapping_add(K_512[t])
+                .wrapping_add(schedule[t]);
+
+            let t2 = Func::uppercase_sigma::<28, 34, 39>(a).wrapping_add(Func::maj(a, b, c));
+
+            h = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
+        }
+
+        self.digest[0] = a.wrapping_add(self.digest[0]);
+        self.digest[1] = b.wrapping_add(self.digest[1]);
+        self.digest[2] = c.wrapping_add(self.digest[2]);
+        self.digest[3] = d.wrapping_add(self.digest[3]);
+        self.digest[4] = e.wrapping_add(self.digest[4]);
+        self.digest[5] = f.wrapping_add(self.digest[5]);
+        self.digest[6] = g.wrapping_add(self.digest[6]);
+        self.digest[7] = h.wrapping_add(self.digest[7]);
     }
 }
 

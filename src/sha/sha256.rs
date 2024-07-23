@@ -6,68 +6,86 @@ use super::sha::Sha;
 
 type Func = Common<u32>;
 
-pub type Sha256 = Sha<u32>;
+pub type Sha256 = Sha<u32, 8, 16>;
+
+impl Default for Sha256 {
+    fn default() -> Self {
+        Self {
+            digest: INIT_256,
+            block: [0; 16],
+        }
+    }
+}
 
 impl HashBytes for Sha256 {
     fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
-        let mut digest = INIT_256;
-        let blocks = preprocess_256(bytes);
+        let mut hash = Sha256::default();
+        hash.update(bytes)
+    }
+}
 
-        for block in blocks.iter() {
-            let mut schedule: Vec<u32> = vec![0; 64];
-            schedule[..16].copy_from_slice(&block[..16]);
-
-            for t in 16..64 {
-                let x = Func::lowercase_sigma::<17, 19, 10>(schedule[t - 2])
-                    .wrapping_add(schedule[t - 7])
-                    .wrapping_add(Func::lowercase_sigma::<7, 18, 3>(schedule[t - 15]))
-                    .wrapping_add(schedule[t - 16]);
-
-                schedule[t] = x;
-            }
-
-            let mut a = digest[0];
-            let mut b = digest[1];
-            let mut c = digest[2];
-            let mut d = digest[3];
-            let mut e = digest[4];
-            let mut f = digest[5];
-            let mut g = digest[6];
-            let mut h = digest[7];
-
-            for t in 0..64 {
-                let t1 = h
-                    .wrapping_add(Func::uppercase_sigma::<6, 11, 25>(e))
-                    .wrapping_add(Func::ch(e, f, g))
-                    .wrapping_add(K_256[t])
-                    .wrapping_add(schedule[t]);
-
-                let t2 = Func::uppercase_sigma::<2, 13, 22>(a).wrapping_add(Func::maj(a, b, c));
-
-                h = g;
-                g = f;
-                f = e;
-                e = d.wrapping_add(t1);
-                d = c;
-                c = b;
-                b = a;
-                a = t1.wrapping_add(t2);
-            }
-
-            digest[0] = a.wrapping_add(digest[0]);
-            digest[1] = b.wrapping_add(digest[1]);
-            digest[2] = c.wrapping_add(digest[2]);
-            digest[3] = d.wrapping_add(digest[3]);
-            digest[4] = e.wrapping_add(digest[4]);
-            digest[5] = f.wrapping_add(digest[5]);
-            digest[6] = g.wrapping_add(digest[6]);
-            digest[7] = h.wrapping_add(digest[7]);
+impl Sha256 {
+    fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
+        for block in preprocess_256(bytes).iter() {
+            self.block.copy_from_slice(&block);
+            self.calculate_block();
         }
 
-        digest
+        self.digest
             .into_iter()
             .flat_map(|value| value.to_be_bytes())
             .collect()
+    }
+
+    fn calculate_block(&mut self) {
+        let mut schedule = vec![0; 64];
+        schedule[..16].copy_from_slice(&self.block[..16]);
+
+        for t in 16..64 {
+            let x = Func::lowercase_sigma::<17, 19, 10>(schedule[t - 2])
+                .wrapping_add(schedule[t - 7])
+                .wrapping_add(Func::lowercase_sigma::<7, 18, 3>(schedule[t - 15]))
+                .wrapping_add(schedule[t - 16]);
+
+            schedule[t] = x;
+        }
+
+        let mut a = self.digest[0];
+        let mut b = self.digest[1];
+        let mut c = self.digest[2];
+        let mut d = self.digest[3];
+        let mut e = self.digest[4];
+        let mut f = self.digest[5];
+        let mut g = self.digest[6];
+        let mut h = self.digest[7];
+
+        for t in 0..64 {
+            let t1 = h
+                .wrapping_add(Func::uppercase_sigma::<6, 11, 25>(e))
+                .wrapping_add(Func::ch(e, f, g))
+                .wrapping_add(K_256[t])
+                .wrapping_add(schedule[t]);
+
+            let t2 = Func::uppercase_sigma::<2, 13, 22>(a).wrapping_add(Func::maj(a, b, c));
+
+            h = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
+        }
+
+        self.digest[0] = a.wrapping_add(self.digest[0]);
+        self.digest[1] = b.wrapping_add(self.digest[1]);
+        self.digest[2] = c.wrapping_add(self.digest[2]);
+        self.digest[3] = d.wrapping_add(self.digest[3]);
+        self.digest[4] = e.wrapping_add(self.digest[4]);
+        self.digest[5] = f.wrapping_add(self.digest[5]);
+        self.digest[6] = g.wrapping_add(self.digest[6]);
+        self.digest[7] = h.wrapping_add(self.digest[7]);
     }
 }
 
