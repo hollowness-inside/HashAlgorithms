@@ -1,5 +1,5 @@
 # HashAlgorithms
-Implementation of SHA-256/512 and Streebog-256/512
+Implementation of SHA-256/512 from scratch with no dependencies
 
 # Usage
 ## Hash bytes
