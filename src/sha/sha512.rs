@@ -2,17 +2,28 @@ use crate::HashBytes;
 
 use super::common::{pad, Common};
 use super::constants::{INIT_512, K_512};
-use super::sha::Sha;
+use super::sha::{Funcs, Sha};
 
 type Func = Common<u64>;
 
-pub type Sha512 = Sha<u64, 8, 16>;
+pub type Sha512 = Sha<u64, 8, 16, 80>;
 
 impl Default for Sha512 {
     fn default() -> Self {
         Self {
             digest: INIT_512,
+            konstants: K_512,
+
             block: [0; 16],
+            funcs: Funcs {
+                ch: Func::ch,
+                maj: Func::maj,
+
+                ls0: Func::lowercase_sigma::<1, 8, 7>,
+                ls1: Func::lowercase_sigma::<19, 61, 6>,
+                us0: Func::uppercase_sigma::<28, 34, 39>,
+                us1: Func::uppercase_sigma::<14, 18, 41>,
+            },
         }
     }
 }
@@ -35,63 +46,6 @@ impl Sha512 {
             .into_iter()
             .flat_map(|value| value.to_be_bytes())
             .collect()
-    }
-
-    fn calculate_block(&mut self) {
-        let schedule = self.calculate_schedule();
-
-        let mut a = self.digest[0];
-        let mut b = self.digest[1];
-        let mut c = self.digest[2];
-        let mut d = self.digest[3];
-        let mut e = self.digest[4];
-        let mut f = self.digest[5];
-        let mut g = self.digest[6];
-        let mut h = self.digest[7];
-
-        for t in 0..80 {
-            let t1 = h
-                .wrapping_add(Func::uppercase_sigma::<14, 18, 41>(e))
-                .wrapping_add(Func::ch(e, f, g))
-                .wrapping_add(K_512[t])
-                .wrapping_add(schedule[t]);
-
-            let t2 = Func::uppercase_sigma::<28, 34, 39>(a).wrapping_add(Func::maj(a, b, c));
-
-            h = g;
-            g = f;
-            f = e;
-            e = d.wrapping_add(t1);
-            d = c;
-            c = b;
-            b = a;
-            a = t1.wrapping_add(t2);
-        }
-
-        self.digest[0] = a.wrapping_add(self.digest[0]);
-        self.digest[1] = b.wrapping_add(self.digest[1]);
-        self.digest[2] = c.wrapping_add(self.digest[2]);
-        self.digest[3] = d.wrapping_add(self.digest[3]);
-        self.digest[4] = e.wrapping_add(self.digest[4]);
-        self.digest[5] = f.wrapping_add(self.digest[5]);
-        self.digest[6] = g.wrapping_add(self.digest[6]);
-        self.digest[7] = h.wrapping_add(self.digest[7]);
-    }
-
-    fn calculate_schedule(&self) -> [u64; 80] {
-        let mut schedule = [0; 80];
-        schedule[..16].copy_from_slice(&self.block[..16]);
-
-        for t in 16..80 {
-            let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
-                .wrapping_add(schedule[t - 7])
-                .wrapping_add(Func::lowercase_sigma::<1, 8, 7>(schedule[t - 15]))
-                .wrapping_add(schedule[t - 16]);
-
-            schedule[t] = x;
-        }
-
-        schedule
     }
 }
 
