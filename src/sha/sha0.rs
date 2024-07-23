@@ -1,5 +1,6 @@
 use super::utils::{FromBytes, ToBytes, WrappingAdd};
 
+#[derive(Debug, Clone)]
 pub(super) struct Funcs<T> {
     pub(super) ch: fn(a: T, b: T, c: T) -> T,
     pub(super) maj: fn(a: T, b: T, c: T) -> T,
@@ -10,6 +11,7 @@ pub(super) struct Funcs<T> {
     pub(super) us1: fn(x: T) -> T,
 }
 
+#[derive(Debug, Clone)]
 pub struct Sha<T, const HASHSIZE: usize, const ROUNDS: usize> {
     pub(super) digest: [T; 8],
     pub(super) block: [T; 16],
