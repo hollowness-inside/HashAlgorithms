@@ -89,12 +89,12 @@ where
         let mut g = self.digest[6];
         let mut h = self.digest[7];
 
-        for t in 0..ROUNDS {
+        for (t, item) in schedule.into_iter().enumerate() {
             let t1 = h
                 .wrapping_add((self.funcs.us1)(e))
                 .wrapping_add((self.funcs.ch)(e, f, g))
                 .wrapping_add(self.konstants[t])
-                .wrapping_add(schedule[t]);
+                .wrapping_add(item);
 
             let t2 = (self.funcs.us0)(a).wrapping_add((self.funcs.maj)(a, b, c));
 
