@@ -27,7 +27,7 @@ impl HashBytes for Sha256 {
 impl Sha256 {
     fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
         for block in preprocess_256(bytes).iter() {
-            self.block.copy_from_slice(&block);
+            self.block.copy_from_slice(block);
             self.calculate_block();
         }
 
@@ -38,17 +38,7 @@ impl Sha256 {
     }
 
     fn calculate_block(&mut self) {
-        let mut schedule = vec![0; 64];
-        schedule[..16].copy_from_slice(&self.block[..16]);
-
-        for t in 16..64 {
-            let x = Func::lowercase_sigma::<17, 19, 10>(schedule[t - 2])
-                .wrapping_add(schedule[t - 7])
-                .wrapping_add(Func::lowercase_sigma::<7, 18, 3>(schedule[t - 15]))
-                .wrapping_add(schedule[t - 16]);
-
-            schedule[t] = x;
-        }
+        let schedule = self.calculate_schedule();
 
         let mut a = self.digest[0];
         let mut b = self.digest[1];
@@ -87,10 +77,26 @@ impl Sha256 {
         self.digest[6] = g.wrapping_add(self.digest[6]);
         self.digest[7] = h.wrapping_add(self.digest[7]);
     }
+
+    fn calculate_schedule(&self) -> [u32; 64] {
+        let mut schedule = [0; 64];
+        schedule[..16].copy_from_slice(&self.block[..16]);
+
+        for t in 16..64 {
+            let x = Func::lowercase_sigma::<17, 19, 10>(schedule[t - 2])
+                .wrapping_add(schedule[t - 7])
+                .wrapping_add(Func::lowercase_sigma::<7, 18, 3>(schedule[t - 15]))
+                .wrapping_add(schedule[t - 16]);
+
+            schedule[t] = x;
+        }
+
+        schedule
+    }
 }
 
 fn preprocess_256(messsage: &[u8]) -> Vec<Vec<u32>> {
-    pad::<512>(&messsage)
+    pad::<512>(messsage)
         .chunks_exact(64)
         .map(|chunk| {
             chunk

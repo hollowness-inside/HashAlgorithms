@@ -27,7 +27,7 @@ impl HashBytes for Sha512 {
 impl Sha512 {
     fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
         for block in preprocess_512(bytes).iter() {
-            self.block.copy_from_slice(&block);
+            self.block.copy_from_slice(block);
             self.calculate_block();
         }
 
@@ -38,17 +38,7 @@ impl Sha512 {
     }
 
     fn calculate_block(&mut self) {
-        let mut schedule = vec![0; 80];
-        schedule[..16].copy_from_slice(&self.block[..16]);
-
-        for t in 16..80 {
-            let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
-                .wrapping_add(schedule[t - 7])
-                .wrapping_add(Func::lowercase_sigma::<1, 8, 7>(schedule[t - 15]))
-                .wrapping_add(schedule[t - 16]);
-
-            schedule[t] = x;
-        }
+        let schedule = self.calculate_schedule();
 
         let mut a = self.digest[0];
         let mut b = self.digest[1];
@@ -86,6 +76,22 @@ impl Sha512 {
         self.digest[5] = f.wrapping_add(self.digest[5]);
         self.digest[6] = g.wrapping_add(self.digest[6]);
         self.digest[7] = h.wrapping_add(self.digest[7]);
+    }
+
+    fn calculate_schedule(&self) -> [u64; 80] {
+        let mut schedule = [0; 80];
+        schedule[..16].copy_from_slice(&self.block[..16]);
+
+        for t in 16..80 {
+            let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
+                .wrapping_add(schedule[t - 7])
+                .wrapping_add(Func::lowercase_sigma::<1, 8, 7>(schedule[t - 15]))
+                .wrapping_add(schedule[t - 16]);
+
+            schedule[t] = x;
+        }
+
+        schedule
     }
 }
 
