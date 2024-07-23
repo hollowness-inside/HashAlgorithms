@@ -1,4 +1,3 @@
-use super::common::pad;
 use super::from_bytes::FromBytes;
 use super::to_bytes::ToBytes;
 use super::wrapadd::WrappingAdd;
@@ -39,7 +38,7 @@ where
     }
 
     pub(super) fn preprocess(messsage: &[u8]) -> Vec<Vec<T>> {
-        let x = pad(HASHSIZE * 2, messsage)
+        let x = Self::pad(HASHSIZE * 2, messsage)
             .chunks_exact(HASHSIZE / 4)
             .map(|chunk| {
                 chunk
@@ -49,6 +48,20 @@ where
             })
             .collect();
         x
+    }
+
+    pub(super) fn pad(n: usize, data: &[u8]) -> Vec<u8> {
+        let bits_len = data.len() * 8;
+
+        let mut data = data.to_vec();
+        data.push(0x80);
+
+        while (data.len() * 8 + 64) % n != 0 {
+            data.push(0);
+        }
+
+        data.extend(bits_len.to_be_bytes());
+        data
     }
 
     pub(super) fn calculate_schedule(&self) -> [T; ROUNDS] {
