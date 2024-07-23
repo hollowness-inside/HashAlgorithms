@@ -1,3 +1,3 @@
 pub trait HashBytes {
-    fn hash_bytes(&[u8]) -> Vec<u8>;
+    fn hash_bytes(bytes: &[u8]) -> Vec<u8>;
 }
