@@ -22,10 +22,15 @@ where
     T: Default + Copy + WrappingAdd + FromBytes + ToBytes,
 {
     pub fn update(&mut self, bytes: &[u8]) {
-        for block in Self::preprocess(bytes).iter() {
-            self.block.copy_from_slice(block);
-            self.calculate_block();
-        }
+        Self::preprocess(bytes).iter().for_each(|block| {
+            self.update_block(block);
+        });
+    }
+
+    #[inline]
+    pub fn update_block(&mut self, block: &[T]) {
+        self.block.copy_from_slice(block);
+        self.calculate_block();
     }
 
     pub fn digest(&self) -> Vec<u8> {
