@@ -1,4 +1,6 @@
 mod common;
+mod constants;
+
 mod sha256;
 mod sha512;
 
