@@ -1,3 +1,6 @@
+use super::common::pad;
+use super::from_bytes::FromBytes;
+use super::to_bytes::ToBytes;
 use super::wrapadd::WrappingAdd;
 
 pub(super) struct Funcs<T> {
@@ -10,18 +13,44 @@ pub(super) struct Funcs<T> {
     pub(super) us1: fn(x: T) -> T,
 }
 
-pub struct Sha<T, const DIGEST_SIZE: usize, const BLOCK_SIZE: usize, const ROUNDS: usize> {
-    pub(super) digest: [T; DIGEST_SIZE],
-    pub(super) block: [T; BLOCK_SIZE],
+pub struct Sha<T, const HASHSIZE: usize, const ROUNDS: usize> {
+    pub(super) digest: [T; 8],
+    pub(super) block: [T; 16],
     pub(super) funcs: Funcs<T>,
     pub(super) konstants: [T; ROUNDS],
 }
 
-impl<T, const DIGEST_SIZE: usize, const BLOCK_SIZE: usize, const ROUNDS: usize>
-    Sha<T, DIGEST_SIZE, BLOCK_SIZE, ROUNDS>
+impl<T, const HASHSIZE: usize, const ROUNDS: usize> Sha<T, HASHSIZE, ROUNDS>
 where
-    T: Default + Copy + WrappingAdd,
+    T: Default + Copy + WrappingAdd + FromBytes + ToBytes,
 {
+    pub fn update(&mut self, bytes: &[u8]) {
+        for block in Self::preprocess(bytes).iter() {
+            self.block.copy_from_slice(block);
+            self.calculate_block();
+        }
+    }
+
+    pub fn digest(&self) -> Vec<u8> {
+        self.digest
+            .into_iter()
+            .flat_map(|value| value.to_bytes())
+            .collect()
+    }
+
+    pub(super) fn preprocess(messsage: &[u8]) -> Vec<Vec<T>> {
+        let x = pad(HASHSIZE * 2, messsage)
+            .chunks_exact(HASHSIZE / 4)
+            .map(|chunk| {
+                chunk
+                    .chunks_exact(HASHSIZE / 64)
+                    .map(|int| T::from_bytes(int.try_into().unwrap()))
+                    .collect::<Vec<T>>()
+            })
+            .collect();
+        x
+    }
+
     pub(super) fn calculate_schedule(&self) -> [T; ROUNDS] {
         let mut schedule = [T::default(); ROUNDS];
         schedule[..16].copy_from_slice(&self.block[..16]);

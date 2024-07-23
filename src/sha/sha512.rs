@@ -1,12 +1,12 @@
 use crate::HashBytes;
 
-use super::common::{pad, Common};
+use super::common::Common;
 use super::constants::{INIT_512, K_512};
 use super::sha::{Funcs, Sha};
 
 type Func = Common<u64>;
 
-pub type Sha512 = Sha<u64, 8, 16, 80>;
+pub type Sha512 = Sha<u64, 512, 80>;
 
 impl Default for Sha512 {
     fn default() -> Self {
@@ -31,37 +31,37 @@ impl Default for Sha512 {
 impl HashBytes for Sha512 {
     fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
         let mut hash = Sha512::default();
-        hash.update(bytes)
+        hash.update(bytes);
+        hash.digest()
     }
 }
 
 impl Sha512 {
-    fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
-        for block in Self::preprocess(bytes).iter() {
-            self.block.copy_from_slice(block);
-            self.calculate_block();
-        }
+    // fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
+    //     for block in Self::preprocess(bytes).iter() {
+    //         self.block.copy_from_slice(block);
+    //         self.calculate_block();
+    //     }
 
-        self.digest
-            .into_iter()
-            .flat_map(|value| value.to_be_bytes())
-            .collect()
-    }
+    //     self.digest
+    //         .into_iter()
+    //         .flat_map(|value| value.to_be_bytes())
+    //         .collect()
+    // }
 
-    fn preprocess(messsage: &[u8]) -> Vec<Vec<u64>> {
-        let x = pad::<1024>(messsage)
-            .chunks_exact(128)
-            .map(|chunk| {
-                chunk
-                    .chunks_exact(8)
-                    .map(|int| u64::from_be_bytes(int.try_into().unwrap()))
-                    .collect::<Vec<u64>>()
-            })
-            .collect();
-        x
-    }
+    // fn preprocess(messsage: &[u8]) -> Vec<Vec<u64>> {
+    //     let x = pad::<1024>(messsage)
+    //         .chunks_exact(128)
+    //         .map(|chunk| {
+    //             chunk
+    //                 .chunks_exact(8)
+    //                 .map(|int| u64::from_be_bytes(int.try_into().unwrap()))
+    //                 .collect::<Vec<u64>>()
+    //         })
+    //         .collect();
+    //     x
+    // }
 }
-
 
 #[cfg(test)]
 mod tests {

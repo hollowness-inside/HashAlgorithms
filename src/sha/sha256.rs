@@ -1,12 +1,12 @@
 use crate::HashBytes;
 
-use super::common::{pad, Common};
+use super::common::Common;
 use super::constants::{INIT_256, K_256};
 use super::sha::{Funcs, Sha};
 
 type Func = Common<u32>;
 
-pub type Sha256 = Sha<u32, 8, 16, 64>;
+pub type Sha256 = Sha<u32, 256, 64>;
 
 impl Default for Sha256 {
     fn default() -> Self {
@@ -31,34 +31,23 @@ impl Default for Sha256 {
 impl HashBytes for Sha256 {
     fn hash_bytes(bytes: &[u8]) -> Vec<u8> {
         let mut hash = Sha256::default();
-        hash.update(bytes)
+        hash.update(bytes);
+        hash.digest()
     }
 }
 
 impl Sha256 {
-    fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
-        for block in Self::preprocess(bytes).iter() {
-            self.block.copy_from_slice(block);
-            self.calculate_block();
-        }
-
-        self.digest
-            .into_iter()
-            .flat_map(|value| value.to_be_bytes())
-            .collect()
-    }
-
-    fn preprocess(messsage: &[u8]) -> Vec<Vec<u32>> {
-        pad::<512>(messsage)
-            .chunks_exact(64)
-            .map(|chunk| {
-                chunk
-                    .chunks_exact(4)
-                    .map(|int| u32::from_be_bytes(int.try_into().unwrap()))
-                    .collect::<Vec<u32>>()
-            })
-            .collect()
-    }
+    // fn preprocess(messsage: &[u8]) -> Vec<Vec<u32>> {
+    //     pad::<512>(messsage)
+    //         .chunks_exact(64)
+    //         .map(|chunk| {
+    //             chunk
+    //                 .chunks_exact(4)
+    //                 .map(|int| u32::from_be_bytes(int.try_into().unwrap()))
+    //                 .collect::<Vec<u32>>()
+    //         })
+    //         .collect()
+    // }
 }
 
 #[cfg(test)]
