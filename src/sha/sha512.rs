@@ -37,7 +37,7 @@ impl HashBytes for Sha512 {
 
 impl Sha512 {
     fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
-        for block in preprocess_512(bytes).iter() {
+        for block in Self::preprocess(bytes).iter() {
             self.block.copy_from_slice(block);
             self.calculate_block();
         }
@@ -47,20 +47,21 @@ impl Sha512 {
             .flat_map(|value| value.to_be_bytes())
             .collect()
     }
+
+    fn preprocess(messsage: &[u8]) -> Vec<Vec<u64>> {
+        let x = pad::<1024>(messsage)
+            .chunks_exact(128)
+            .map(|chunk| {
+                chunk
+                    .chunks_exact(8)
+                    .map(|int| u64::from_be_bytes(int.try_into().unwrap()))
+                    .collect::<Vec<u64>>()
+            })
+            .collect();
+        x
+    }
 }
 
-fn preprocess_512(messsage: &[u8]) -> Vec<Vec<u64>> {
-    let x = pad::<1024>(messsage)
-        .chunks_exact(128)
-        .map(|chunk| {
-            chunk
-                .chunks_exact(8)
-                .map(|int| u64::from_be_bytes(int.try_into().unwrap()))
-                .collect::<Vec<u64>>()
-        })
-        .collect();
-    x
-}
 
 #[cfg(test)]
 mod tests {

@@ -37,7 +37,7 @@ impl HashBytes for Sha256 {
 
 impl Sha256 {
     fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
-        for block in preprocess_256(bytes).iter() {
+        for block in Self::preprocess(bytes).iter() {
             self.block.copy_from_slice(block);
             self.calculate_block();
         }
@@ -47,18 +47,18 @@ impl Sha256 {
             .flat_map(|value| value.to_be_bytes())
             .collect()
     }
-}
 
-fn preprocess_256(messsage: &[u8]) -> Vec<Vec<u32>> {
-    pad::<512>(messsage)
-        .chunks_exact(64)
-        .map(|chunk| {
-            chunk
-                .chunks_exact(4)
-                .map(|int| u32::from_be_bytes(int.try_into().unwrap()))
-                .collect::<Vec<u32>>()
-        })
-        .collect()
+    fn preprocess(messsage: &[u8]) -> Vec<Vec<u32>> {
+        pad::<512>(messsage)
+            .chunks_exact(64)
+            .map(|chunk| {
+                chunk
+                    .chunks_exact(4)
+                    .map(|int| u32::from_be_bytes(int.try_into().unwrap()))
+                    .collect::<Vec<u32>>()
+            })
+            .collect()
+    }
 }
 
 #[cfg(test)]
