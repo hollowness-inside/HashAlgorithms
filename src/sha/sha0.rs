@@ -54,10 +54,9 @@ where
         let mut data = data.to_vec();
         data.push(0x80);
 
-        while (data.len() * 8 + 64) % n != 0 {
-            data.push(0);
-        }
-
+        let zeros = n - (bits_len + 65) % n;
+        data.extend(vec![0; zeros / 8]);
+        
         data.extend(bits_len.to_be_bytes());
         data
     }
