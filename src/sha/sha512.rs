@@ -2,7 +2,7 @@ use crate::HashBytes;
 
 use super::common::Common;
 use super::constants::{INIT_512, K_512};
-use super::sha::{Funcs, Sha};
+use super::sha0::{Funcs, Sha};
 
 pub type Sha512 = Sha<u64, 512, 80>;
 

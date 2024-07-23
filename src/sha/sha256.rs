@@ -2,7 +2,7 @@ use crate::HashBytes;
 
 use super::common::Common;
 use super::constants::{INIT_256, K_256};
-use super::sha::{Funcs, Sha};
+use super::sha0::{Funcs, Sha};
 
 pub type Sha256 = Sha<u32, 256, 64>;
 

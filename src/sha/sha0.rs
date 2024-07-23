@@ -1,6 +1,4 @@
-use super::from_bytes::FromBytes;
-use super::to_bytes::ToBytes;
-use super::wrapadd::WrappingAdd;
+use super::utils::{FromBytes, ToBytes, WrappingAdd};
 
 pub(super) struct Funcs<T> {
     pub(super) ch: fn(a: T, b: T, c: T) -> T,
