@@ -4,8 +4,6 @@ use super::common::Common;
 use super::constants::{INIT_512, K_512};
 use super::sha::{Funcs, Sha};
 
-type Func = Common<u64>;
-
 pub type Sha512 = Sha<u64, 512, 80>;
 
 impl Default for Sha512 {
@@ -16,13 +14,13 @@ impl Default for Sha512 {
 
             block: [0; 16],
             funcs: Funcs {
-                ch: Func::ch,
-                maj: Func::maj,
+                ch: Common::<u64>::ch,
+                maj: Common::<u64>::maj,
 
-                ls0: Func::lowercase_sigma::<1, 8, 7>,
-                ls1: Func::lowercase_sigma::<19, 61, 6>,
-                us0: Func::uppercase_sigma::<28, 34, 39>,
-                us1: Func::uppercase_sigma::<14, 18, 41>,
+                ls0: Common::<u64>::lowercase_sigma::<1, 8, 7>,
+                ls1: Common::<u64>::lowercase_sigma::<19, 61, 6>,
+                us0: Common::<u64>::uppercase_sigma::<28, 34, 39>,
+                us1: Common::<u64>::uppercase_sigma::<14, 18, 41>,
             },
         }
     }
@@ -34,33 +32,6 @@ impl HashBytes for Sha512 {
         hash.update(bytes);
         hash.digest()
     }
-}
-
-impl Sha512 {
-    // fn update(&mut self, bytes: &[u8]) -> Vec<u8> {
-    //     for block in Self::preprocess(bytes).iter() {
-    //         self.block.copy_from_slice(block);
-    //         self.calculate_block();
-    //     }
-
-    //     self.digest
-    //         .into_iter()
-    //         .flat_map(|value| value.to_be_bytes())
-    //         .collect()
-    // }
-
-    // fn preprocess(messsage: &[u8]) -> Vec<Vec<u64>> {
-    //     let x = pad::<1024>(messsage)
-    //         .chunks_exact(128)
-    //         .map(|chunk| {
-    //             chunk
-    //                 .chunks_exact(8)
-    //                 .map(|int| u64::from_be_bytes(int.try_into().unwrap()))
-    //                 .collect::<Vec<u64>>()
-    //         })
-    //         .collect();
-    //     x
-    // }
 }
 
 #[cfg(test)]
