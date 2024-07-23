@@ -2,7 +2,7 @@ use crate::HashBytes;
 
 use super::common::{pad, Common};
 use super::constants::{INIT_512, K_512};
-use super::sha::Sha;
+use super::Sha;
 
 type Func = Common<u64>;
 

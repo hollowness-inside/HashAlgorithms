@@ -2,7 +2,7 @@ use crate::HashBytes;
 
 use super::common::{pad, Common};
 use super::constants::{INIT_256, K_256};
-use super::sha::Sha;
+use super::Sha;
 
 type Func = Common<u32>;
 
@@ -72,7 +72,7 @@ impl HashBytes for Sha256 {
 }
 
 fn preprocess_256(messsage: &[u8]) -> Vec<Vec<u32>> {
-    pad::<512>(&messsage)
+    pad::<512>(messsage)
         .chunks_exact(64)
         .map(|chunk| {
             chunk
