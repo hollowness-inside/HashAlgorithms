@@ -36,3 +36,17 @@ pub(super) struct Common<T> {
 
 impl_common!(u32);
 impl_common!(u64);
+
+pub(super) fn pad<const N: usize>(data: &[u8]) -> Vec<u8> {
+    let bits_len = data.len() * 8;
+
+    let mut data = data.to_vec();
+    data.push(0x80);
+
+    while (data.len() * 8 + 64) % N != 0 {
+        data.push(0);
+    }
+
+    data.extend(bits_len.to_be_bytes());
+    data
+}

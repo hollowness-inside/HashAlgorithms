@@ -1,4 +1,4 @@
-use super::common::Common;
+use super::common::{pad, Common};
 
 type Func = Common<u64>;
 
@@ -103,10 +103,7 @@ pub fn sha512(messsage: &[u8]) -> Vec<u8> {
 
     for block in blocks.iter() {
         let mut schedule: Vec<u64> = vec![0; 80];
-
-        for i in 0..16 {
-            schedule[i] = block[i];
-        }
+        schedule[..16].copy_from_slice(&block[..16]);
 
         for t in 16..80 {
             let x = Func::lowercase_sigma::<19, 61, 6>(schedule[t - 2])
@@ -162,7 +159,7 @@ pub fn sha512(messsage: &[u8]) -> Vec<u8> {
 }
 
 fn preprocess_512(messsage: &[u8]) -> Vec<Vec<u64>> {
-    let x = pad_512(&messsage)
+    let x = pad::<1024>(messsage)
         .chunks_exact(128)
         .map(|chunk| {
             chunk
@@ -172,21 +169,6 @@ fn preprocess_512(messsage: &[u8]) -> Vec<Vec<u64>> {
         })
         .collect();
     x
-}
-
-fn pad_512(data: &[u8]) -> Vec<u8> {
-    let bits_len = data.len() * 8;
-
-    let mut data = data.to_vec();
-    data.push(0x80);
-
-    while (data.len() * 8 + 64) % 1024 != 0 {
-        data.push(0);
-    }
-
-    data.extend(bits_len.to_be_bytes());
-
-    data
 }
 
 #[cfg(test)]
