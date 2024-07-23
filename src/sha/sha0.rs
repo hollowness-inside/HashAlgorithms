@@ -41,7 +41,7 @@ where
             .map(|chunk| {
                 chunk
                     .chunks_exact(HASHSIZE / 64)
-                    .map(|int| T::from_bytes(int.try_into().unwrap()))
+                    .map(|int| T::from_bytes(int))
                     .collect::<Vec<T>>()
             })
             .collect();
